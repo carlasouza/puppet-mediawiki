@@ -20,19 +20,20 @@ class mediawiki::debian inherits mediawiki::base {
 			owner		=> 'www-data',
 			group		=> 'www-data',
 			ensure	=> directory,
-			require => File['wikis'],
+			require	=> File['wikis'],
 			mode		=>	700;
 		'/var/lib/mediawiki/wikis/resource[:name]/extensions':
 			owner		=> 'root',
 			group		=> 'root',
 			ensure	=> directory,
-			require => File['wikis'],
+			require	=> File['wikis'],
 			mode		=> 755;
 	}
 	
-	file {'/var/lib/mediawiki/wikis/resource[:name]/LocalSettings.php':
-		content => template();
-	}
+#acho q n precisa
+#	file {'/var/lib/mediawiki/wikis/resource[:name]/LocalSettings.php':
+#		content => template();
+#	}
 
 #		defaultsettings.php
 #		$wgUploadPath       = '{$wgScriptPath}/upload';
@@ -83,12 +84,14 @@ class apache {
 		ensure => latest;
 	}
 
-	service { 'apache': require => Package['httpd'] }
+	service { 'apache':
+		require		=> Package['httpd'],
+		subscribe	=> File['apache-file'];
+	}
 
 	file {'apache-file'
-		name		=> '/etc/apache2/sites-enable/resource[:name]',
-		content	=> template('wiki.erb'),
-		notify	=> service['apache'];
+		path		=> '/etc/apache2/sites-enable/resource[:name]',
+		content	=> template('wiki.erb');
 	}
 
 }
