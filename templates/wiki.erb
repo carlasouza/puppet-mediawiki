@@ -1,0 +1,29 @@
+## MediaWiki <=% resource[:name] %>
+#
+<VirtualHost *:80>
+	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'>
+		Options +FollowSymLinks
+		AllowOverride All
+		order allow,deny
+		allow from all
+	</Directory>
+
+	# some directories must be protected
+	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'/config>
+		Options -FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'/upload>
+		Options -FollowSymLinks
+		AllowOverride None
+	</Directory>
+	
+	ServerAdmin <=% resource[:admin] %>
+	DocumentRoot /var/lib/mediawiki1.7/wikis/<=% resource[:name] %>
+	ServerPath /wikicopin
+	ServerName <=% resource[:servername] %>
+	ServerAlias <=% resource[:serveralias] %>
+	ErrorLog /var/log/apache2/error_log-<=% resource[:name] %>
+	CustomLog /var/log/apache2/access_log-<=% resource[:name] %> common
+</VirtualHost>
+
