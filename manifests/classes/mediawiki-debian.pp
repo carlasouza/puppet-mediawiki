@@ -80,11 +80,11 @@ class mediawiki::debian inherits mediawiki::base {
 
 class apache {
 	
-	package { 'httpd':
+	package { 'apache2':
 		ensure => latest;
 	}
 
-	service { 'apache':
+	service { 'apache2':
 		require		=> Package['httpd'],
 		subscribe	=> File['apache-file'];
 	}
