@@ -1,7 +1,7 @@
-## MediaWiki <=% resource[:name] %>
+## MediaWiki <%= name %>
 #
-<VirtualHost *:80>
-	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'>
+<VirtualHost <%= ip %>:<%= port %>>
+	<Directory /var/lib/mediawiki/wikis/<%= name %>>
 		Options +FollowSymLinks
 		AllowOverride All
 		order allow,deny
@@ -9,21 +9,21 @@
 	</Directory>
 
 	# some directories must be protected
-	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'/config>
+	<Directory /var/lib/mediawiki/wikis/<%= name %>/config>
 		Options -FollowSymLinks
 		AllowOverride None
 	</Directory>
-	<Directory /var/lib/mediawiki1.7/wikis/'<=% resource[:name] %>'/upload>
+	<Directory /var/lib/mediawiki/wikis/<%= name %>/upload>
 		Options -FollowSymLinks
 		AllowOverride None
 	</Directory>
 	
-	ServerAdmin <=% resource[:admin] %>
-	DocumentRoot /var/lib/mediawiki1.7/wikis/<=% resource[:name] %>
-	ServerPath /wikicopin
-	ServerName <=% resource[:servername] %>
-	ServerAlias <=% resource[:serveralias] %>
-	ErrorLog /var/log/apache2/error_log-<=% resource[:name] %>
-	CustomLog /var/log/apache2/access_log-<=% resource[:name] %> common
+	ServerAdmin <%= admin %>
+	DocumentRoot /var/lib/mediawiki/wikis/<%= name %>
+	ServerPath /<%= servername %>
+	ServerName <%= servername %>
+	ServerAlias <%= serveralias %>
+	ErrorLog /var/log/apache2/error_log-<%= name %>
+	CustomLog /var/log/apache2/access_log-<%= name %> common
 </VirtualHost>
 
