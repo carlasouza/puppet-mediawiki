@@ -9,7 +9,7 @@ Usage
 Parameters available::
 
   mediawiki::new { "Name":
-    ensure      => present, disabled, absent
+    ensure      => present, enabled, disabled, absent
     admin       => foo@bar.com
     servername  => foo.bar.com      #Default to $name
     serveralias => foo              #Default to $name
