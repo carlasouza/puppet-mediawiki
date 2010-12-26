@@ -5,7 +5,9 @@ Puppet Module to create many wikis using only one mediawiki installation.
 
 Usage
 -----
-::
+
+Parameters available::
+
   mediawiki::new { "Name":
     ensure      => present, disabled, absent
     admin       => foo@bar.com
