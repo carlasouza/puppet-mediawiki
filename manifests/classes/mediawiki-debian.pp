@@ -118,19 +118,65 @@ define mediawiki::new(
 					require => File["mywiki"];
 			}
 
+			file {"apache-file":
+				path    => "/etc/apache2/sites-available/${name}",
+				content => template("mediawiki/wiki.erb"),
+			}
 
-		file {"apache-file":
-			path		=> "/etc/apache2/sites-available/${name}",
-			content	=> template("mediawiki/wiki.erb");
-#			notify a2ensite and apache reload
+         exec { "reload-apache2":
+				require     => File["apache-file"],
+            command     => "/etc/init.d/apache2 reload",
+            refreshonly => true,
+         }
+
 		}
 
-
+		enabled: {
+         exec { "enable-site":
+            command => "/usr/sbin/a2ensite $name",
+            onlyif  => "/bin/readlink -e /etc/apache2/sites-available/$name",
+            notify  => Exec["reload-apache2"];
+         }
+         exec { "reload-apache2":
+            command     => "/etc/init.d/apache2 reload",
+            refreshonly => true,
+         }
 		}
-#		disable: {
-#		}
-#		absent:{
-#		}
+
+		disable: { 
+         exec { "disable-site":
+				command => "/usr/sbin/a2dissite $name",
+            onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify  => Exec["reload-apache2"];
+         }
+         exec { "reload-apache2":
+            command     => "/etc/init.d/apache2 reload",
+            refreshonly => true,
+         }
+		}
+
+		absent:{
+			file {"/var/lib/mediawiki/wikis/${name}/":
+				recurse => true, #FIXME it isn't removing the directory
+				ensure  => absent;
+			}
+
+			exec { "disable-site":
+				command => "/usr/sbin/a2dissite $name",
+            onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify  => Exec["reload-apache2"];
+			}
+
+			file {"/etc/apache2/sites-available/${name}":
+				require => Exec["disable-site"],
+				ensure  => absent;
+			}
+
+			exec { "reload-apache2":
+				command     => "/etc/init.d/apache2 reload",
+				refreshonly => true;
+			}
+		}
 	}
 }
 
