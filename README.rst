@@ -1,7 +1,7 @@
 Mediawiki farm module
 =======================================
 
-Puppet Module to create many wikis using only one mediawiki installation.
+Puppet Module to create many wikis (on the sabe machine)  using only one mediawiki installation.
 
 Usage
 -----
