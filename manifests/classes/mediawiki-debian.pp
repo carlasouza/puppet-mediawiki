@@ -6,64 +6,55 @@ define mediawiki::new(
 	$ip='*',
 	$port=80) {
 
+#	include apache::common
+
 	case $ensure {
-		present:  {
+		present: {
 			package { "mediawiki":
-				ensure	=> latest,
+				ensure => latest,
 			}
 		
 			file { "wikis":
-				path		=> "/var/lib/mediawiki/wikis",
-				owner    => "root",
-				group    => "root",
-				ensure   => directory,
-				mode     => 755,
-				require	=> Package["mediawiki"];
+				path    => "/var/lib/mediawiki/wikis",
+				owner   => "root",
+				group   => "root",
+				ensure  => directory,
+				mode    => 755,
+				require => Package["mediawiki"];
 			}
 		
 			file { "mywiki":
-				path		=> "/var/lib/mediawiki/wikis/${name}",
-		      owner    => "root",
-		      group    => "root",
-		      ensure   => directory,
-		      mode     => 755,
-		      require  => File["wikis"];
+				path    => "/var/lib/mediawiki/wikis/${name}",
+				owner   => "root",
+				group   => "root",
+				ensure  => directory,
+				mode    => 755,
+				require => File["wikis"];
 			}
 		
 			file {
 				["/var/lib/mediawiki/wikis/${name}/upload",
 				"/var/lib/mediawiki/wikis/${name}/images",
 				"/var/lib/mediawiki/wikis/${name}/config"]:
-					owner		=> "www-data",
-					group		=> "www-data",
-					ensure	=> directory,
-					require  => File["mywiki"],
-					notify   => File["/var/lib/mediawiki/wikis/${name}/config/index.php"],
-					mode		=>	700;
+					owner   => "www-data",
+					group	  => "www-data",
+					ensure  => directory,
+					require => File["mywiki"],
+					notify  => File["/var/lib/mediawiki/wikis/${name}/config/index.php"],
+					mode	  =>	700;
 				"/var/lib/mediawiki/wikis/${name}/extensions":
-					owner		=> "root",
-					group		=> "root",
-					ensure	=> directory,
-					require  => File["mywiki"],
-					mode		=> 755;
+					owner	  => "root",
+					group   => "root",
+					ensure  => directory,
+					require => File["mywiki"],
+					mode    => 755;
 				"/var/lib/mediawiki/wikis/${name}/config/index.php":
-#					source => "puppet:///modules/mediawiki/index.php",
 					content => template("mediawiki/index.php.erb"),
-					owner  => "www-data",
-               group  => "www-data",
-					mode   => 700;
+					owner	  => "www-data",
+					group	  => "www-data",
+					mode    => 700;
 			}
-			
-		#	file {"/var/lib/mediawiki/wikis/${name}/LocalSettings.php":
-		#		content => template();
-		#	}
-		
-		#     if ( file_exists( "config/LocalSettings.php" ) ) {
-		#         echo( "To complete the installation, move <tt>config/LocalSettings.php</tt> to the parent directory." );
-		#		defaultsettings.php
-		#		$wgUploadPath       = "{$wgScriptPath}/upload";
-		#		$wgUploadDirectory      = "{$IP}/upload";
-		
+
 			file {
 				"/var/lib/mediawiki/wikis/${name}/api.php":
 					ensure  => "/usr/share/mediawiki/api.php",
@@ -121,79 +112,86 @@ define mediawiki::new(
 			file {"apache-file":
 				path    => "/etc/apache2/sites-available/${name}",
 				content => template("mediawiki/wiki.erb"),
+				notify  => Exec["enable-site"];
 			}
-
-         exec { "reload-apache2":
+			exec { "enable-site":
+				command => "/usr/sbin/a2ensite $name",
+				onlyif  => "/bin/readlink -e /etc/apache2/sites-available/$name",
+				notify  => Exec["reload-apache2"];
+			}
+			exec { "reload-apache2":
 				require     => File["apache-file"],
-            command     => "/etc/init.d/apache2 reload",
-            refreshonly => true,
-         }
+				command     => "/etc/init.d/apache2 reload",
+				refreshonly => true,
+			}
 
 		}
 
 		enabled: {
-         exec { "enable-site":
-            command => "/usr/sbin/a2ensite $name",
-            onlyif  => "/bin/readlink -e /etc/apache2/sites-available/$name",
-            notify  => Exec["reload-apache2"];
-         }
-         exec { "reload-apache2":
-            command     => "/etc/init.d/apache2 reload",
-            refreshonly => true,
-         }
+			exec { "enable-site":
+				command => "/usr/sbin/a2ensite $name",
+				onlyif  => "/bin/readlink -e /etc/apache2/sites-available/$name",
+				notify  => Exec["reload-apache2"];
+			}
+			exec { "reload-apache2":
+				require => File["apache-file"],
+				command => "/etc/init.d/apache2 reload",
+				refreshonly => true,
+			}
+
 		}
 
 		disable: { 
-         exec { "disable-site":
+			exec { "disable-site":
 				command => "/usr/sbin/a2dissite $name",
-            onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
-				notify  => Exec["reload-apache2"];
-         }
-         exec { "reload-apache2":
-            command     => "/etc/init.d/apache2 reload",
-            refreshonly => true,
-         }
+				onlyif	=> "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify	=> Exec["reload-apache2"];
+			}
+		 	exec { "reload-apache2":
+		 		 command		 => "/etc/init.d/apache2 reload",
+		 		 refreshonly => true,
+		 	}
 		}
 
 		absent:{
 			file {"/var/lib/mediawiki/wikis/${name}/":
 				recurse => true, #FIXME it isn't removing the directory
-				ensure  => absent;
-			}
-
-			exec { "disable-site":
-				command => "/usr/sbin/a2dissite $name",
-            onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
-				notify  => Exec["reload-apache2"];
+				ensure	=> absent;
 			}
 
 			file {"/etc/apache2/sites-available/${name}":
 				require => Exec["disable-site"],
-				ensure  => absent;
+				ensure	=> absent;
+			}
+
+			exec { "disable-site":
+				command => "/usr/sbin/a2dissite $name",
+				onlyif	=> "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify	=> Exec["reload-apache2"];
 			}
 
 			exec { "reload-apache2":
-				command     => "/etc/init.d/apache2 reload",
+				command		 => "/etc/init.d/apache2 reload",
 				refreshonly => true;
 			}
 		}
 	}
 }
 
-#class apache {
-#	
-#	package { "apache2":
-#		ensure => latest;
-#	}
-#
-#	service { "apache2":
-#		require		=> Package["httpd"],
-#		subscribe	=> File["apache-file"];
-#	}
-#
-#	file {"apache-file":
-#		path		=> "/etc/apache2/sites-enable/${name}",
-#		content	=> template("wiki.erb");
-#	}
-#
-#}
+class apache::common {
+
+	exec { "reload-apache2":
+	 	command     => "/etc/init.d/apache2 reload",
+		refreshonly => true;
+	}
+	exec { "enable-site":
+		command => "/usr/sbin/a2ensite $name",
+		onlyif  => "/bin/readlink -e /etc/apache2/sites-available/$name",
+		notify  => Exec["reload-apache2"];
+	}
+	exec { "disable-site":
+		command => "/usr/sbin/a2dissite $name",
+		onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+		notify  => Exec["reload-apache2"];
+	}
+}
