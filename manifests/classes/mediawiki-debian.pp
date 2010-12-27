@@ -133,27 +133,27 @@ define mediawiki::new(
 
 		disable: { 
 			exec { "disable-site":
-				command  => "/usr/sbin/a2dissite $name",
-				onlyif	=> "/bin/readlink -e /etc/apache2/sites-enabled/$name",
-				notify	=> Exec["reload-apache2"];
+				command => "/usr/sbin/a2dissite $name",
+				onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify  => Exec["reload-apache2"];
 			}
 		}
 
 		absent:{
 			file {"/var/lib/mediawiki/wikis/${name}/":
-				recurse  => true, #FIXME it isn't removing the directory
-				ensure	=> absent;
+				recurse => true, #FIXME it isn't removing the directory
+				ensure  => absent;
 			}
 
 			file {"/etc/apache2/sites-available/${name}":
-				require  => Exec["disable-site"],
-				ensure	=> absent;
+				require => Exec["disable-site"],
+				ensure  => absent;
 			}
 
 			exec { "disable-site":
-				command  => "/usr/sbin/a2dissite $name",
-				onlyif	=> "/bin/readlink -e /etc/apache2/sites-enabled/$name",
-				notify	=> Exec["reload-apache2"];
+				command => "/usr/sbin/a2dissite $name",
+				onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
+				notify  => Exec["reload-apache2"];
 			}
 
 		}
