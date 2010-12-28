@@ -131,7 +131,7 @@ define mediawiki::new(
 
 		}
 
-		disable: { 
+		disabled: { 
 			exec { "disable-site":
 				command => "/usr/sbin/a2dissite $name",
 				onlyif  => "/bin/readlink -e /etc/apache2/sites-enabled/$name",
