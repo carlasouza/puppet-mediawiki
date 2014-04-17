@@ -9,12 +9,12 @@ Usage
 Parameters available::
 
   mediawiki::new { "Name":
-    ensure      => present, enabled, disabled, absent
-    admin       => foo@bar.com
-    servername  => foo.bar.com      #Default to $name
-    serveralias => foo              #Default to $name
-    ip          => 127.0.0.1        #IP for apache configuration. Default to *
-    port        => 80               #Port for apache configuration. Default to 80
+    ensure      => present, | enabled, | disabled, | absent,
+    admin       => 'foo@bar.com',
+    servername  => 'foo.bar.com',      #Default to $name
+    serveralias => 'foo',              #Default to $name
+    ip          => '127.0.0.1',        #IP for apache configuration. Default to *
+    port        => 80                  #Port for apache configuration. Default to 80
   }
 
 Notes
